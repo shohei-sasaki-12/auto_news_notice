@@ -26,10 +26,12 @@ def get_web_info(url):
                 break
             else:
                 print(f"エラー発生。{retry_time}秒後にリトライします。")
+                print(e)
                 time.sleep(retry_time)
 
     except requests.exceptions.RequestException as e:
         print(f"エラー発生。{retry_time}秒後にリトライします。")
+        print(e)
         time.sleep(retry_time)
 
     return ret
@@ -62,16 +64,19 @@ def extract_web_info(res):
         link.append(a.attrs['href'])
 
         # 公開日時取得
-        release_time_res = get_web_info(a.attrs['href'])
-        release_time_res.encoding = "utf-8"
-        release_time_soup = BeautifulSoup(release_time_res.text, "html.parser")
-        date_str = release_time_soup.find("time").get_text(strip=True)
-        date_str = date_str.split("(")[0] + date_str.split(")")[1]  # 曜日を除去
-        dt = datetime.datetime.strptime(
-            f"{datetime.datetime.now().year}/{date_str}",
-            "%Y/%m/%d %H:%M"
-        )
-        release_time.append(dt.strftime("%Y/%m/%d %H:%M"))
+        try:
+            release_time_res = get_web_info(a.attrs['href'])
+            release_time_res.encoding = "utf-8"
+            release_time_soup = BeautifulSoup(release_time_res.text, "html.parser")
+            date_str = release_time_soup.find("time").get_text(strip=True)
+            date_str = date_str.split("(")[0] + date_str.split(")")[1]  # 曜日を除去
+            dt = datetime.datetime.strptime(
+                f"{datetime.datetime.now().year}/{date_str}",
+                "%Y/%m/%d %H:%M"
+            )
+            release_time.append(dt.strftime("%Y/%m/%d %H:%M"))
+        except:
+            release_time.append("")
 
     df = pd.DataFrame({"取得日時":get_time, "タイトル":title, "URL":link, "公開日時":release_time})
 

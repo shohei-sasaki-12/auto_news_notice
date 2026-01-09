@@ -12,12 +12,7 @@ def keyword_filter(df):
 
     # キーワードが未入力の場合はフィルタ機能をスキップ
     if js_data['filter'] != "":
-        i = 0
-        for data in df.values:
-            if js_data['filter'] not in data[1]:
-                df = df.drop(i)
-
-            i += 1
+        df = df[df["タイトル"].str.contains(js_data["filter"], na=False)]
 
     return df
 
@@ -28,21 +23,15 @@ def deduplication(df):
     
     files = glob.glob(folder_path + "/*.csv")
 
-    df_old = None
-    for file in files:
-        if df_old is not None:
-            df_old = pd.concat([df_old, pd.read_csv(file)])
-        else:
-            df_old = pd.read_csv(file)
+    if len(files) != 0:
+        df_old = None
+        for file in files:
+            if df_old is not None:
+                df_old = pd.concat([df_old, pd.read_csv(file)])
+            else:
+                df_old = pd.read_csv(file)
 
-    # 過去記事と重複する場合は削除
-    i = 0
-    for data in df.values:
-        for data_old in df_old.values:
-            if data[1] == data_old[1]:
-                df = df.drop(i)
-                break
-
-        i += 1
+        # 過去記事と重複する場合は削除
+        df = df[~df["URL"].isin(df_old["URL"])]
 
     return df
